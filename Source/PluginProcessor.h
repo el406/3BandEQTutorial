@@ -10,6 +10,28 @@
 
 #include <JuceHeader.h>
 
+
+// We save temp parameters as a struct so its easy to access
+enum Slope
+{
+    SLOPE_12,
+    SLOPE_24,
+    SLOPE_36,
+    SLOPE_48
+};
+
+struct ChainSettings
+{
+    float peakFreq{ 0 }, peakGainInDecibels{ 0 }, peakQuality{ 1.f };
+    float lowCutFreq{ 0 }, highCutFreq{ 0 };
+    Slope lowCutSlope{ Slope::SLOPE_12 }, highCutSlope{ Slope::SLOPE_12 };
+
+};
+
+
+ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& parameterManager);
+
+
 //==============================================================================
 /**
 */
@@ -59,6 +81,24 @@ public:
     juce::AudioProcessorValueTreeState parameterManager{ *this, nullptr, "Parameters", returnParameterLayout()};
 
 private:
+    // Template definitions
+    using Filter = juce::dsp::IIR::Filter<float>;
+
+    using CutFilter = juce::dsp::ProcessorChain < Filter, Filter, Filter, Filter>;
+
+    using MonoChain = juce::dsp::ProcessorChain <CutFilter, Filter, CutFilter>;
+
+    MonoChain leftChain, rightChain;
+
+    enum ChainPositions
+    {
+        LowCut,
+        Peak,
+        HighCut
+    };
+
+    
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (_3BandEQTutorialAudioProcessor)
 };
